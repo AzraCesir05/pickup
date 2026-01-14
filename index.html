@@ -98,6 +98,33 @@
             position: relative;
             cursor: pointer;
             transition: transform 0.1s, border-color 0.2s;
+            overflow: hidden;
+        }
+
+        .slot-symbol {
+            transition: transform 0.1s;
+        }
+
+        .slot.spinning .slot-symbol {
+            animation: spin 0.1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: translateY(0) rotateX(0deg); }
+            25% { transform: translateY(-10px) rotateX(90deg); opacity: 0.5; }
+            50% { transform: translateY(-20px) rotateX(180deg); opacity: 0.3; }
+            75% { transform: translateY(-10px) rotateX(270deg); opacity: 0.5; }
+            100% { transform: translateY(0) rotateX(360deg); }
+        }
+
+        @keyframes finalStop {
+            0% { transform: scale(1.3) rotateZ(10deg); }
+            50% { transform: scale(0.9) rotateZ(-5deg); }
+            100% { transform: scale(1) rotateZ(0deg); }
+        }
+
+        .slot.stopped .slot-symbol {
+            animation: finalStop 0.3s ease-out;
         }
         
         .slot:active {
@@ -284,7 +311,7 @@
             <span>🌙</span>
             <span>🧲</span>
             <span>❤️</span>
-            <span>👑</span>
+            <span>💎</span>
             <span>🍀</span>
         </div>
         
@@ -325,7 +352,7 @@
     </div>
 
     <script>
-        const symbols = ['⭐', '🌙', '🧲', '❤️', '👑', '🍀'];
+        const symbols = ['⭐', '🌙', '🧲', '❤️', '💎', '🍀'];
         
         let game = {
             round: 1,
@@ -363,7 +390,7 @@
             for (let i = 0; i < 5; i++) {
                 const slot = document.createElement('div');
                 slot.className = 'slot';
-                slot.innerHTML = '<span class="hold-text">HOLD</span><span>?</span>';
+                slot.innerHTML = '<span class="hold-text">HOLD</span><span class="slot-symbol">?</span>';
                 slot.onclick = () => toggleHold(i);
                 container.appendChild(slot);
                 game.slots.push(null);
@@ -384,13 +411,35 @@
         
         function spin() {
             const slots = document.querySelectorAll('.slot');
+            
             slots.forEach((slot, i) => {
                 if (!game.held.includes(i)) {
+                    slot.classList.add('spinning');
+                    slot.classList.remove('stopped');
+                    
+                    // Nasumično menjanje tokom vrtenja
+                    const spinInterval = setInterval(() => {
+                        const randomSym = symbols[Math.floor(Math.random() * symbols.length)];
+                        slot.querySelector('.slot-symbol').textContent = randomSym;
+                    }, 100);
+                    
+                    // Zaustavljanje sa različitim vremenima
+                    const stopTime = 1500 + (i * 200);
+                    
                     setTimeout(() => {
-                        const sym = symbols[Math.floor(Math.random() * symbols.length)];
-                        game.slots[i] = sym;
-                        slot.querySelector('span:last-child').textContent = sym;
-                    }, 500);
+                        clearInterval(spinInterval);
+                        slot.classList.remove('spinning');
+                        
+                        // Konačni simbol
+                        const finalSym = symbols[Math.floor(Math.random() * symbols.length)];
+                        game.slots[i] = finalSym;
+                        slot.querySelector('.slot-symbol').textContent = finalSym;
+                        
+                        // Animacija zaustavljanja
+                        slot.classList.add('stopped');
+                        setTimeout(() => slot.classList.remove('stopped'), 300);
+                        
+                    }, stopTime);
                 }
             });
             
@@ -398,7 +447,7 @@
                 game.started = true;
                 renderCombos();
                 update();
-            }, 600);
+            }, 2300);
         }
         
         function update() {
@@ -550,5 +599,4 @@
         init();
     </script>
 </body>
-
 </html>
