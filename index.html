@@ -433,7 +433,7 @@
             
             const combos = [
                 ...symbols.map((s, i) => ({ name: '3x ' + s, val: p.trio[i], key: '3-' + s })),
-                { name: 'Full House', val: p.fullHouse, key: 'full-house' },
+                { name: '3x+2x', val: p.fullHouse, key: 'full-house' },
                 { name: '5 Different', val: p.fiveDiff, key: '5-diff' },
                 { name: '4x Same', val: p.fourSame, key: '4-same' },
                 { name: '5x Same', val: p.fiveSame, key: '5-same' }
@@ -550,4 +550,5 @@
         init();
     </script>
 </body>
+
 </html>
