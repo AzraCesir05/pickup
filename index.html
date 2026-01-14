@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Pickup Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+:root{
+    --primary-color: #9a1841;
+    --secondary-color: #7d0a25;
+    --accent-color: #55091c;
+    --bg-color: #e67994;
+    --bg-secondary: #000000;
+}
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: var(--secondary-color);
+            padding: 10px;
+            color: white;
+            min-height: 100vh;
+            touch-action: manipulation;
+        }
+        
+        .game-container {
+            background: var(--primary-color);
+            border: 3px solid var(--accent-color);
+            border-radius: 10px;
+            padding: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .symbols-top {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            background: rgba(252, 97, 141, 0.26);
+            border: 2px solid var(--accent-color);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: clamp(20px, 5vw, 24px);
+        }
+        
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            gap: 8px;
+            font-size: clamp(12px, 3vw, 14px);
+        }
+        
+        .info-item {
+            background: rgba(110, 12, 12, 0.5);
+            border: 2px solid #500719;
+            border-radius: 5px;
+            padding: 8px 5px;
+            text-align: center;
+            flex: 1;
+        }
+        
+        .info-value {
+            color: #fbbf24;
+            font-weight: bold;
+            margin-top: 5px;
+            font-size: clamp(11px, 3vw, 14px);
+        }
+        
+        .slots-container {
+            display: flex;
+            justify-content: center;
+            gap: clamp(5px, 2vw, 8px);
+            margin: 20px 0;
+        }
+        
+        .slot {
+            width: clamp(50px, 15vw, 60px);
+            height: clamp(70px, 18vw, 80px);
+            background: #000;
+            border: 3px solid var(--bg-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(28px, 8vw, 36px);
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.1s, border-color 0.2s;
+        }
+        
+        .slot:active {
+            transform: scale(0.95);
+        }
+        
+        .slot.held {
+            border-color: #fbbf24;
+            background: #2d1b00;
+        }
+        
+        .hold-text {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: #fbbf24;
+            color: #000;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: clamp(7px, 2vw, 8px);
+            font-weight: bold;
+            display: none;
+        }
+        
+        .slot.held .hold-text {
+            display: block;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .btn {
+            padding: 14px 24px;
+            font-size: clamp(13px, 3.5vw, 16px);
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+            transition: transform 0.1s, opacity 0.2s;
+            min-width: 100px;
+            touch-action: manipulation;
+        }
+        
+        .btn:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+        
+        .btn-draw {
+            background: var(--accent-color);
+        }
+        
+        .btn-draw:disabled {
+            background: var(--primary-color);
+            opacity: 0.5;
+        }
+        
+        .btn-joker {
+            background: #f59e0b;
+        }
+        
+        .btn-joker:disabled {
+            background: var(--accent-color);
+            opacity: 0.3;
+        }
+        
+        .btn-next {
+            background: var(--accent-color);
+            display: none;
+        }
+        
+        .message {
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            min-height: 45px;
+            font-size: clamp(13px, 3.5vw, 15px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .message.win {
+            background: rgba(211, 89, 134, 0.441);
+            border: 2px solid var(--primary-color);
+            color: var(--secondary-color);
+        }
+        
+        .message.bonus {
+            background: rgba(251, 191, 36, 0.3);
+            border: 2px solid #fbbf24;
+            color: #fbbf24;
+        }
+        
+        .combinations {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        
+        .combo-item {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--bg-color);
+            border-radius: 5px;
+            padding: 10px 8px;
+            text-align: center;
+            font-size: clamp(10px, 2.8vw, 11px);
+            transition: transform 0.1s;
+        }
+        
+        .combo-item.achieved {
+            background: rgba(172, 5, 61, 0.3);
+            border-color: #c11149;
+        }
+        
+        .combo-item.available {
+            background: rgba(251, 191, 36, 0.3);
+            border-color: #fbbf24;
+            cursor: pointer;
+        }
+        
+        .combo-item.available:active {
+            transform: scale(0.95);
+        }
+        
+        .combo-value {
+            color: #fbbf24;
+            font-weight: bold;
+            margin-top: 5px;
+            font-size: clamp(10px, 2.8vw, 11px);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--primary-color);
+            border: 3px solid var(--accent-color);
+            border-radius: 15px;
+            padding: 30px 20px;
+            text-align: center;
+            max-width: 90%;
+            width: 100%;
+        }
+        
+        .modal-title {
+            font-size: clamp(24px, 6vw, 28px);
+            color: #fbbf24;
+            margin-bottom: 20px;
+        }
+        
+        .modal-text {
+            font-size: clamp(16px, 4vw, 20px);
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="symbols-top">
+            <span>⭐</span>
+            <span>🌙</span>
+            <span>🧲</span>
+            <span>❤️</span>
+            <span>👑</span>
+            <span>🍀</span>
+        </div>
+        
+        <div class="info-bar">
+            <div class="info-item">
+                <div>Round</div>
+                <div class="info-value" id="round">1/5</div>
+            </div>
+            <div class="info-item">
+                <div>Target</div>
+                <div class="info-value" id="target">220,000</div>
+            </div>
+            <div class="info-item">
+                <div>Score</div>
+                <div class="info-value" id="score">0</div>
+            </div>
+        </div>
+        
+        <div class="slots-container" id="slots"></div>
+        
+        <div class="controls">
+            <button class="btn btn-draw" id="drawBtn">Draw</button>
+            <button class="btn btn-joker" id="jokerBtn" disabled>Joker</button>
+            <button class="btn btn-next" id="nextBtn">Next</button>
+        </div>
+        
+        <div class="message" id="message"></div>
+        
+        <div class="combinations" id="combinations"></div>
+    </div>
+    
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-title">🎰 GAME OVER!</div>
+            <div id="modalText" class="modal-text"></div>
+            <button class="btn btn-next" onclick="location.reload()" style="margin-top:20px;display:inline-block">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const symbols = ['⭐', '🌙', '🧲', '❤️', '👑', '🍀'];
+        
+        let game = {
+            round: 1,
+            score: 0,
+            drawsLeft: 2,
+            jokerUsed: false,
+            slots: [],
+            held: [],
+            achieved: [],
+            points: {},
+            started: false
+        };
+        
+        const pts = {
+            1: { trio: [8500, 9200, 10500, 11800, 9700, 10300], fullHouse: 48600, fiveDiff: 97500, fourSame: 103200, fiveSame: 108900 },
+            2: { trio: [17800, 19400, 21200, 23100, 18900, 20600], fullHouse: 97200, fiveDiff: 195000, fourSame: 206400, fiveSame: 217800 },
+            3: { trio: [28500, 31200, 29700, 33900, 30100, 32400], fullHouse: 146700, fiveDiff: 292500, fourSame: 309600, fiveSame: 326700 },
+            4: { trio: [38200, 41600, 39400, 43200, 40800, 42100], fullHouse: 195300, fiveDiff: 390000, fourSame: 412800, fiveSame: 435600 },
+            5: { trio: [47900, 51800, 49500, 54300, 50700, 52900], fullHouse: 243900, fiveDiff: 487500, fourSame: 516000, fiveSame: 544500 }
+        };
+        
+        function init() {
+            createSlots();
+            update();
+            renderCombos();
+            setTimeout(() => spin(), 500);
+        }
+        
+        function createSlots() {
+            const container = document.getElementById('slots');
+            container.innerHTML = '';
+            game.slots = [];
+            game.held = [];
+            
+            for (let i = 0; i < 5; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'slot';
+                slot.innerHTML = '<span class="hold-text">HOLD</span><span>?</span>';
+                slot.onclick = () => toggleHold(i);
+                container.appendChild(slot);
+                game.slots.push(null);
+            }
+        }
+        
+        function toggleHold(i) {
+            if (!game.started) return;
+            const slot = document.querySelectorAll('.slot')[i];
+            if (game.held.includes(i)) {
+                game.held = game.held.filter(x => x !== i);
+                slot.classList.remove('held');
+            } else {
+                game.held.push(i);
+                slot.classList.add('held');
+            }
+        }
+        
+        function spin() {
+            const slots = document.querySelectorAll('.slot');
+            slots.forEach((slot, i) => {
+                if (!game.held.includes(i)) {
+                    setTimeout(() => {
+                        const sym = symbols[Math.floor(Math.random() * symbols.length)];
+                        game.slots[i] = sym;
+                        slot.querySelector('span:last-child').textContent = sym;
+                    }, 500);
+                }
+            });
+            
+            setTimeout(() => {
+                game.started = true;
+                renderCombos();
+                update();
+            }, 600);
+        }
+        
+        function update() {
+            document.getElementById('round').textContent = game.round + '/5';
+            document.getElementById('score').textContent = game.score.toLocaleString();
+            document.getElementById('target').textContent = (120000 + game.round * 100000).toLocaleString();
+            
+            const drawBtn = document.getElementById('drawBtn');
+            const jokerBtn = document.getElementById('jokerBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            if (game.drawsLeft > 0) {
+                drawBtn.disabled = false;
+                drawBtn.textContent = 'Draw (' + game.drawsLeft + ')';
+                nextBtn.style.display = 'none';
+                jokerBtn.disabled = true;
+            } else if (!game.jokerUsed) {
+                drawBtn.disabled = true;
+                jokerBtn.disabled = false;
+                nextBtn.style.display = 'none';
+            } else {
+                drawBtn.disabled = true;
+                jokerBtn.disabled = true;
+                nextBtn.style.display = 'inline-block';
+            }
+        }
+        
+        function renderCombos() {
+            const container = document.getElementById('combinations');
+            container.innerHTML = '';
+            const p = pts[game.round];
+            
+            const combos = [
+                ...symbols.map((s, i) => ({ name: '3x ' + s, val: p.trio[i], key: '3-' + s })),
+                { name: 'Full House', val: p.fullHouse, key: 'full-house' },
+                { name: '5 Different', val: p.fiveDiff, key: '5-diff' },
+                { name: '4x Same', val: p.fourSame, key: '4-same' },
+                { name: '5x Same', val: p.fiveSame, key: '5-same' }
+            ];
+            
+            combos.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'combo-item';
+                
+                if (game.achieved.includes(c.key)) {
+                    div.classList.add('achieved');
+                    div.innerHTML = '<div>' + c.name + '</div><div class="combo-value">' + c.val.toLocaleString() + '</div>';
+                } else {
+                    if (isAvailable(c.key)) {
+                        div.classList.add('available');
+                        div.onclick = () => claim(c.key, c.val, c.name);
+                    }
+                    div.innerHTML = '<div>' + c.name + '</div><div class="combo-value">???</div>';
+                }
+                
+                container.appendChild(div);
+            });
+        }
+        
+        function isAvailable(key) {
+            const counts = {};
+            game.slots.forEach(s => {
+                if (s) counts[s] = (counts[s] || 0) + 1;
+            });
+            
+            const vals = Object.values(counts).sort((a, b) => b - a);
+            const unique = Object.keys(counts).length;
+            
+            if (key === '5-same' && vals[0] === 5) return true;
+            if (key === '4-same' && vals[0] === 4) return true;
+            if (key === 'full-house' && vals[0] === 3 && vals[1] === 2) return true;
+            if (key === '5-diff' && unique === 5) return true;
+            if (key.startsWith('3-')) {
+                const sym = key.split('-')[1];
+                if (counts[sym] >= 3) return true;
+            }
+            return false;
+        }
+        
+        function claim(key, points, name) {
+            if (game.achieved.includes(key)) return;
+            
+            game.achieved.push(key);
+            game.points[key] = points;
+            game.score += points;
+            msg('🎉 ' + name + ' +' + points.toLocaleString() + '!', 'win');
+            
+            game.drawsLeft = 2;
+            game.held = [];
+            document.querySelectorAll('.slot').forEach(s => s.classList.remove('held'));
+            
+            setTimeout(() => {
+                renderCombos();
+                spin();
+            }, 1500);
+        }
+        
+        function msg(text, type) {
+            const m = document.getElementById('message');
+            m.className = 'message ' + type;
+            m.textContent = text;
+            setTimeout(() => m.textContent = '', 3000);
+        }
+        
+        document.getElementById('drawBtn').onclick = () => {
+            if (game.drawsLeft > 0) {
+                game.drawsLeft--;
+                spin();
+            }
+        };
+        
+        document.getElementById('jokerBtn').onclick = () => {
+            if (!game.jokerUsed) {
+                game.jokerUsed = true;
+                game.drawsLeft = 2;
+                game.held = [];
+                document.querySelectorAll('.slot').forEach(s => s.classList.remove('held'));
+                msg('🃏 Joker! New chance!', 'bonus');
+                spin();
+            }
+        };
+        
+        document.getElementById('nextBtn').onclick = () => {
+            const target = 120000 + game.round * 100000;
+            
+            if (game.score >= target) {
+                game.score += 220000;
+                msg('🎁 BONUS +220,000!', 'bonus');
+            }
+            
+            if (game.round < 5) {
+                game.round++;
+                game.drawsLeft = 2;
+                game.jokerUsed = false;
+                game.achieved = [];
+                game.points = {};
+                game.started = false;
+                createSlots();
+                update();
+                renderCombos();
+                setTimeout(() => spin(), 500);
+            } else {
+                const modal = document.getElementById('modal');
+                document.getElementById('modalText').innerHTML = '<div>Final Score: <span style="color:#fbbf24">' + game.score.toLocaleString() + '</span></div>';
+                modal.classList.add('active');
+            }
+        };
+        
+        init();
+    </script>
+</body>
+</html>
